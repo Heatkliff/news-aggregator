@@ -44,7 +44,6 @@ class News(models.Model):
     slug = models.SlugField(max_length=500, unique=True, blank=True)
     content = models.TextField()
     url = models.URLField(unique=True)
-    published_at = models.DateTimeField()
     source = models.ForeignKey(Source, on_delete=models.CASCADE, related_name='news')
     categories = models.ManyToManyField(Category, related_name='news', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
