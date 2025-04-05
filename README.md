@@ -35,6 +35,8 @@ Create a `.env` file in the root directory with the following variables:
 DEBUG=True
 SECRET_KEY=your_secret_key
 ALLOWED_HOSTS=localhost,127.0.0.1
+SP_USER_LOGIN=superuser_login
+SP_USER_PASS=superuser_password
 
 # Database settings
 DB_NAME=news_aggregator
