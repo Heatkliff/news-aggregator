@@ -51,6 +51,9 @@ class News(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        verbose_name_plural = "News"
+
     def save(self, *args, **kwargs):
         if not self.slug:
             # Generate unique slug
