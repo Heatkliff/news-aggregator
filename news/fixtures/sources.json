@@ -1,0 +1,362 @@
+[
+  {
+    "model": "news.source",
+    "pk": 1,
+    "fields": {
+      "name": "BBC News",
+      "url": "https://www.bbc.com/news",
+      "rss_url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 2,
+    "fields": {
+      "name": "CNN",
+      "url": "https://edition.cnn.com/",
+      "rss_url": "http://rss.cnn.com/rss/edition.rss",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 3,
+    "fields": {
+      "name": "The Guardian",
+      "url": "https://www.theguardian.com/",
+      "rss_url": "https://www.theguardian.com/international/rss",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-03T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 4,
+    "fields": {
+      "name": "Reuters",
+      "url": "https://www.reuters.com/",
+      "rss_url": "https://news.google.com/rss/search?q=site:reuters.com",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-04T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 5,
+    "fields": {
+      "name": "Associated Press",
+      "url": "https://apnews.com/",
+      "rss_url": "https://www.ap.org/en-us/rss/",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-05T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 6,
+    "fields": {
+      "name": "The New York Times",
+      "url": "https://www.nytimes.com/",
+      "rss_url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-06T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 7,
+    "fields": {
+      "name": "The Washington Post",
+      "url": "https://www.washingtonpost.com/",
+      "rss_url": "http://feeds.washingtonpost.com/rss/world",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-07T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 8,
+    "fields": {
+      "name": "Al Jazeera",
+      "url": "https://www.aljazeera.com/",
+      "rss_url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-08T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 9,
+    "fields": {
+      "name": "Bloomberg",
+      "url": "https://www.bloomberg.com/",
+      "rss_url": "https://feeds.bloomberg.com/markets/sitemap_news.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-09T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 10,
+    "fields": {
+      "name": "CNBC",
+      "url": "https://www.cnbc.com/",
+      "rss_url": "https://www.cnbc.com/rss-feeds/",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-10T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 11,
+    "fields": {
+      "name": "The Wall Street Journal",
+      "url": "https://www.wsj.com/",
+      "rss_url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-11T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 12,
+    "fields": {
+      "name": "Financial Times",
+      "url": "https://www.ft.com/",
+      "rss_url": "https://www.ft.com/rss/home",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 13,
+    "fields": {
+      "name": "The Economist",
+      "url": "https://www.economist.com/",
+      "rss_url": "https://www.economist.com/rss",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-13T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 14,
+    "fields": {
+      "name": "Wired",
+      "url": "https://www.wired.com/",
+      "rss_url": "https://www.wired.com/feed/rss",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-14T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 15,
+    "fields": {
+      "name": "TechCrunch",
+      "url": "https://techcrunch.com/",
+      "rss_url": "https://techcrunch.com/feed/",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-15T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 16,
+    "fields": {
+      "name": "The Verge",
+      "url": "https://www.theverge.com/",
+      "rss_url": "https://www.theverge.com/rss/index.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-16T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 17,
+    "fields": {
+      "name": "Ars Technica",
+      "url": "https://arstechnica.com/",
+      "rss_url": "https://feeds.arstechnica.com/arstechnica/index",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-17T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 18,
+    "fields": {
+      "name": "Engadget",
+      "url": "https://www.engadget.com/",
+      "rss_url": "https://www.engadget.com/rss.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-18T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 19,
+    "fields": {
+      "name": "Gizmodo",
+      "url": "https://gizmodo.com/",
+      "rss_url": "https://gizmodo.com/rss",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-19T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 20,
+    "fields": {
+      "name": "Science Daily",
+      "url": "https://www.sciencedaily.com/",
+      "rss_url": "https://www.sciencedaily.com/rss/all.xml",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-20T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 21,
+    "fields": {
+      "name": "Nature",
+      "url": "https://www.nature.com/",
+      "rss_url": "https://www.nature.com/newsfeeds/rss/news.rss",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-21T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 22,
+    "fields": {
+      "name": "Popular Science",
+      "url": "https://www.popsci.com/",
+      "rss_url": "https://www.popsci.com/feed/",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-22T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 23,
+    "fields": {
+      "name": "ESPN",
+      "url": "https://www.espn.com/",
+      "rss_url": "https://www.espn.com/espn/rss/news",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-23T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 24,
+    "fields": {
+      "name": "Sports Illustrated",
+      "url": "https://www.si.com/",
+      "rss_url": "https://www.si.com/rss/si_topstories.rss",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-24T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 25,
+    "fields": {
+      "name": "The Athletic",
+      "url": "https://theathletic.com/",
+      "rss_url": null,
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-25T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 26,
+    "fields": {
+      "name": "Variety",
+      "url": "https://variety.com/",
+      "rss_url": "https://variety.com/feed/",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-26T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 27,
+    "fields": {
+      "name": "The Hollywood Reporter",
+      "url": "https://www.hollywoodreporter.com/",
+      "rss_url": "https://www.hollywoodreporter.com/feed/",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-27T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 28,
+    "fields": {
+      "name": "Entertainment Weekly",
+      "url": "https://ew.com/",
+      "rss_url": "https://ew.com/feed/",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-28T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 29,
+    "fields": {
+      "name": "National Geographic",
+      "url": "https://www.nationalgeographic.com/",
+      "rss_url": "https://www.nationalgeographic.com/pages/article/rss",
+      "needs_scraping": true,
+      "active": true,
+      "created_at": "2023-01-29T00:00:00Z"
+    }
+  },
+  {
+    "model": "news.source",
+    "pk": 30,
+    "fields": {
+      "name": "Forbes",
+      "url": "https://www.forbes.com/",
+      "rss_url": "https://www.forbes.com/innovation/feed/",
+      "needs_scraping": false,
+      "active": true,
+      "created_at": "2023-01-30T00:00:00Z"
+    }
+  }
+]

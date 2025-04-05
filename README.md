@@ -56,24 +56,34 @@ CELERY_RESULT_BACKEND=redis://redis:6379/0
 
 ### Running with Docker
 
-1. Build the Docker images:
+Build the Docker images and start the services:
 ```
-docker-compose build
-```
-
-2. Start the services:
-```
-docker-compose up
+docker compose up --build
 ```
 
-3. Run migrations:
+
+### Database Population Commands
+
+Use these commands to populate your database with test data:
+
+Basic command - creates 50 random news articles without clearing existing data:
 ```
-docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py populate_db
 ```
 
-4. Create a superuser:
+Creates a specific number of news articles (100 in this example):
 ```
-docker-compose exec web python manage.py createsuperuser
+docker-compose exec web python manage.py populate_db --news_count=100
+```
+
+Clears all existing data before populating with 50 default news articles:
+```
+docker-compose exec web python manage.py populate_db --clear
+```
+
+Clears all existing data and creates 100 news articles:
+```
+docker-compose exec web python manage.py populate_db --clear --news_count=100
 ```
 
 ## Development

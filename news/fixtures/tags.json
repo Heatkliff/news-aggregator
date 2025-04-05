@@ -1,0 +1,162 @@
+[
+  {
+    "model": "news.tag",
+    "pk": 1,
+    "fields": {
+      "name": "Breaking News",
+      "slug": "breaking-news"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 2,
+    "fields": {
+      "name": "Economy",
+      "slug": "economy"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 3,
+    "fields": {
+      "name": "Elections",
+      "slug": "elections"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 4,
+    "fields": {
+      "name": "Climate Change",
+      "slug": "climate-change"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 5,
+    "fields": {
+      "name": "AI",
+      "slug": "ai"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 6,
+    "fields": {
+      "name": "Blockchain",
+      "slug": "blockchain"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 7,
+    "fields": {
+      "name": "Space",
+      "slug": "space"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 8,
+    "fields": {
+      "name": "Football",
+      "slug": "football"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 9,
+    "fields": {
+      "name": "Basketball",
+      "slug": "basketball"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 10,
+    "fields": {
+      "name": "Olympics",
+      "slug": "olympics"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 11,
+    "fields": {
+      "name": "COVID-19",
+      "slug": "covid-19"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 12,
+    "fields": {
+      "name": "Research",
+      "slug": "research"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 13,
+    "fields": {
+      "name": "Movies",
+      "slug": "movies"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 14,
+    "fields": {
+      "name": "Music",
+      "slug": "music"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 15,
+    "fields": {
+      "name": "Startups",
+      "slug": "startups"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 16,
+    "fields": {
+      "name": "Agriculture",
+      "slug": "agriculture"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 17,
+    "fields": {
+      "name": "Education Reform",
+      "slug": "education-reform"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 18,
+    "fields": {
+      "name": "Energy",
+      "slug": "energy"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 19,
+    "fields": {
+      "name": "Mental Health",
+      "slug": "mental-health"
+    }
+  },
+  {
+    "model": "news.tag",
+    "pk": 20,
+    "fields": {
+      "name": "Cyber Security",
+      "slug": "cyber-security"
+    }
+  }
+]
