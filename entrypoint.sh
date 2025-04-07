@@ -36,15 +36,6 @@ else:
     print("SP_USER_LOGIN or SP_USER_PASS not set.")
 END
 
-
-#echo "Creating superuser..."
-#python manage.py shell << END
-#from django.contrib.auth import get_user_model
-#User = get_user_model()
-#if not User.objects.filter(username='$SP_USER_LOGIN').exists():
-#    User.objects.create_superuser('$SP_USER_LOGIN', '', '$SP_USER_PASS')
-#END
-
 # Collect static files (if needed)
 # echo "Collecting static files..."
 # python manage.py collectstatic --noinput
