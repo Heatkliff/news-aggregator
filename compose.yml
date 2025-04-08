@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    entrypoint: /app/entrypoint-web.sh
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
@@ -46,6 +47,7 @@ services:
 
   celery:
     build: .
+    entrypoint: /app/entrypoint-celery.sh
     command: celery -A news_aggregator worker --loglevel=info
     volumes:
       - .:/app
@@ -69,6 +71,7 @@ services:
 
   celery-beat:
     build: .
+    entrypoint: /app/entrypoint-celery-beat.sh
     command: celery -A news_aggregator beat --loglevel=info
     volumes:
       - .:/app

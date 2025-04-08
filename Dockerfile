@@ -23,7 +23,5 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . /app/
 
-# Make entrypoint executable
-RUN chmod +x /app/entrypoint.sh
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Make entrypoint scripts executable
+RUN chmod +x /app/entrypoint-*.sh
