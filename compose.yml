@@ -45,6 +45,12 @@ services:
     volumes:
       - redis_data:/data
 
+  splash:
+    image: scrapinghub/splash:latest
+    ports:
+      - "8050:8050"
+    command: --max-timeout 300
+
   celery:
     build: .
     entrypoint: /app/entrypoint-celery.sh
