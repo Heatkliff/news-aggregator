@@ -61,7 +61,7 @@ class News(models.Model):
     content = models.TextField()
     url = models.URLField(unique=True)
     source = models.ForeignKey(Source, on_delete=models.CASCADE, related_name='news')
-    categories = models.ManyToManyField(Category, related_name='news', blank=True)
+    categories = models.ManyToManyField(SiteCategory, related_name='news', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
