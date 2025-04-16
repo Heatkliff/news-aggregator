@@ -1,6 +1,7 @@
+import uuid
+
 from django.db import models
 from django.utils.text import slugify
-import uuid
 
 
 class Source(models.Model):
@@ -24,6 +25,7 @@ class Category(models.Model):
     """
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
+
     class Meta:
         verbose_name_plural = "Categories"
 
@@ -34,6 +36,20 @@ class Category(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
+
+class SiteCategory(models.Model):
+    """
+    Model representing an original news category from source
+    """
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Site Category"
+        verbose_name_plural = "Site Categories"
+
+    def __str__(self):
+        return self.name
 
 
 class News(models.Model):
