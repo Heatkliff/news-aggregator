@@ -19,11 +19,11 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
     list_display = ('title', 'source', 'created_at')
-    list_filter = ('source', 'categories')
+    list_filter = ('source', 'site_categories')
     search_fields = ('title', 'content')
     prepopulated_fields = {'slug': ('title',)}
     date_hierarchy = 'created_at'
-    filter_horizontal = ('categories',)
+    filter_horizontal = ('site_categories',)
 
 
 @admin.register(Tag)
