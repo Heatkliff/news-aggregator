@@ -1,12 +1,10 @@
 import json
 import logging
 import re
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import feedparser
-import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import RequestException
 
@@ -67,8 +65,6 @@ class RSSParser:
             logger.warning("No articles parsed, JSON file not created")
 
         return total_sources, total_articles
-
-    # Removed predefined_sources method as we're only using sources from the database
 
     def parse_source(self, source: Source) -> Tuple[List[Dict], int]:
         """
@@ -140,10 +136,7 @@ class RSSParser:
             # Extract full content based on the source
             content = self._extract_full_content(entry, url, source.name)
 
-            # Leave slug empty as requested
-            slug = ""
-
-            # Get site category (single value, not a list)
+            # Get site category
             site_category = ""
             if hasattr(entry, 'tags'):
                 for tag in entry.tags:
@@ -194,19 +187,14 @@ class RSSParser:
                     elif entry.category and entry.category.strip():
                         tags = [entry.category.strip()]
 
-            # Set created_at as the current moment of parsing
-            current_time = datetime.now().isoformat()
-
             # Create article dictionary
             article = {
                 "title": title,
-                "slug": slug,
                 "content": content,
                 "url": url,
                 "source": source.name,
                 "site_category": site_category,
-                "tags": tags,
-                "created_at": current_time
+                "tags": tags
             }
 
             return article
