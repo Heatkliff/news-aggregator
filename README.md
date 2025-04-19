@@ -61,6 +61,69 @@ Build the Docker images and start the services:
 docker compose up --build
 ```
 
+## RSS Parsing
+
+The system supports collecting news from RSS feeds of various sources. Each active source in the database that has a valid `rss_url` can be automatically parsed using the built-in management command.
+
+### Run RSS parsing for all sources
+
+To fetch and parse RSS articles from all active sources stored in the database, run the following command in Docker:
+
+```
+docker-compose exec web python manage.py rss_parse
+```
+
+This command will:
+- Load all active `Source` objects with non-empty `rss_url`
+- Use a site-specific configuration if defined (or fall back to a default config)
+- Extract content, tags, and categories
+- Store the parsed articles in the database or output them to a JSON file during development
+
+### Customizing RSS Extraction Per Site
+
+The RSS parser uses a configuration dictionary to control how content, tags, and categories are extracted for each site. You can define custom logic for any domain by updating the `SITE_CONFIGS` dictionary.
+
+Example configuration for a hypothetical site `example.com`:
+
+```python
+"example.com": {
+    "name": "Example News",
+    "domain_patterns": ["example.com"],
+    "content_extractors": [
+        lambda entry: entry.get('fulltext', ''),
+        lambda entry: entry.get('content', [{}])[0].get('value', '') if entry.get('content') else '',
+        lambda entry: entry.get('summary', ''),
+        lambda entry: entry.get('description', '')
+    ],
+    "tag_extractors": [
+        lambda entry: [tag.term.strip() for tag in entry.get('tags', []) if hasattr(tag, 'term') and tag.term.strip()],
+        lambda entry: [entry.get('category', '').strip()] if isinstance(entry.get('category'), str) else [],
+        lambda entry: [cat.strip() for cat in entry.get('category', []) if cat and cat.strip()] if isinstance(entry.get('category'), list) else []
+    ],
+    "category_extractors": [
+        lambda entry: entry.get('category', '').strip() if isinstance(entry.get('category'), str) else '',
+        lambda entry: entry.get('category', [''])[0].strip() if isinstance(entry.get('category'), list) and entry.get('category') else ''
+    ],
+    "content_cleaners": []
+}
+```
+
+If no match is found for a given source domain or name, the default configuration will be used instead:
+
+```python
+"default": {
+    "name": "Default",
+    "domain_patterns": [],
+    "content_extractors": [...],
+    "tag_extractors": [...],
+    "category_extractors": [...],
+    "content_cleaners": []
+}
+```
+
+This setup allows easy per-source customization of parsing behavior without hardcoding logic.
+
+
 
 ### Database Population Commands
 
