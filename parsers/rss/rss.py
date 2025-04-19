@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any, Callable
 from urllib.parse import urlparse
 
 import feedparser
@@ -20,8 +20,34 @@ logging.basicConfig(
 
 class RSSParser:
     """
-    Class for parsing RSS feeds from various news sources
+    Class for parsing RSS feeds from various news sources using a configuration-based approach
     """
+
+    # Site configurations
+    SITE_CONFIGS = {
+        "default": {
+            "name": "Default",
+            "domain_patterns": [],
+            "content_extractors": [
+                lambda entry: entry.get('content_encoded', ''),
+                lambda entry: entry.get('content', [{}])[0].get('value', '') if entry.get('content') else '',
+                lambda entry: entry.get('fulltext', ''),
+                lambda entry: entry.get('summary', ''),
+                lambda entry: entry.get('description', '')
+            ],
+            "tag_extractors": [
+                lambda entry: [tag.strip() for key, val in entry.items() if 'tags' in key.lower() and isinstance(val, str) for tag in val.split(',') if tag.strip()],
+                lambda entry: [tag.term.strip() for tag in entry.get('tags', []) if hasattr(tag, 'term') and tag.term.strip()],
+                lambda entry: [entry.get('category', '').strip()] if entry.get('category') and isinstance(entry.get('category'), str) else [],
+                lambda entry: [cat.strip() for cat in entry.get('category', []) if cat and cat.strip()] if isinstance(entry.get('category'), list) else []
+            ],
+            "category_extractors": [
+                lambda entry: entry.get('category', '').strip() if isinstance(entry.get('category'), str) else '',
+                lambda entry: entry.get('category', [''])[0].strip() if isinstance(entry.get('category'), list) and entry.get('category') else ''
+            ],
+            "content_cleaners": []
+        }
+    }
 
     def __init__(self, output_file: str = 'parsed_news.json'):
         """
@@ -109,7 +135,7 @@ class RSSParser:
 
     def _process_entry(self, entry, source: Source) -> Optional[Dict]:
         """
-        Process a single RSS entry and convert to article dict
+        Process a single RSS entry and convert to article dict using site configuration
 
         Args:
             entry: RSS feed entry
@@ -133,59 +159,22 @@ class RSSParser:
             # Extract title
             title = entry.title if hasattr(entry, 'title') else "Untitled"
 
-            # Extract full content based on the source
-            content = self._extract_full_content(entry, url, source.name)
+            # Get site configuration based on URL
+            site_config = self._get_site_config(url, source.name)
 
-            # Get site category
-            site_category = ""
-            if hasattr(entry, 'tags'):
-                for tag in entry.tags:
-                    if hasattr(tag, 'term') and tag.term:
-                        site_category = tag.term.strip()
-                        break
-            elif hasattr(entry, 'category'):
-                if isinstance(entry.category, list) and entry.category:
-                    site_category = entry.category[0].strip() if entry.category[0] else ""
-                elif entry.category:
-                    site_category = entry.category.strip()
+            # Extract full content using the site configuration
+            content = self._extract_content(entry, url, site_config)
+
+            # Get site category using the site configuration
+            site_category = self._extract_category(entry, site_config)
 
             # Create SiteCategory if not empty
             if site_category:
                 category_obj, _ = SiteCategory.objects.get_or_create(name=site_category)
                 site_category = category_obj.name
 
-            # Get tags - extract all possible tags from the entry
-            tags = []
-
-            # Special handling for Korrespondent source
-            if source.name == 'Кореспондент' or 'korrespondent.net' in url:
-                # Check if entry has content that might contain orgsource:tags
-                content_to_check = ""
-                if hasattr(entry, 'content') and entry.content:
-                    content_to_check = entry.content[0].value if isinstance(entry.content[0].value, str) else ""
-                elif hasattr(entry, 'description'):
-                    content_to_check = entry.description
-                elif hasattr(entry, 'summary'):
-                    content_to_check = entry.summary
-
-                # Extract tags from <orgsource:tags> format
-                if content_to_check:
-                    tag_match = re.search(r'<orgsource:tags>(.*?)</orgsource:tags>', content_to_check)
-                    if tag_match:
-                        raw_tags = tag_match.group(1)
-                        # Split by commas and strip whitespace
-                        tags = [tag.strip() for tag in raw_tags.split(',') if tag.strip()]
-                        logger.info(f"Extracted tags from Korrespondent: {tags}")
-
-            # If tags are still empty, use standard extraction methods
-            if not tags:
-                if hasattr(entry, 'tags'):
-                    tags = [tag.term.strip() for tag in entry.tags if hasattr(tag, 'term') and tag.term.strip()]
-                elif hasattr(entry, 'category'):
-                    if isinstance(entry.category, list):
-                        tags = [cat.strip() for cat in entry.category if cat and cat.strip()]
-                    elif entry.category and entry.category.strip():
-                        tags = [entry.category.strip()]
+            # Get tags using the site configuration
+            tags = self._extract_tags(entry, site_config)
 
             # Create article dictionary
             article = {
@@ -203,79 +192,147 @@ class RSSParser:
             logger.error(f"Error processing entry: {str(e)}")
             return None
 
-    def _extract_full_content(self, entry, url: str, source_name: str) -> str:
+    def _get_site_config(self, url: str, source_name: str) -> Dict:
         """
-        Extract full content from the entry or article page based on the source
+        Get site configuration based on URL or source name, inheriting missing or empty
+        configuration sections from the default configuration
+
+        Args:
+            url: Article URL
+            source_name: Name of the source
+
+        Returns:
+            Site configuration dictionary with inherited defaults where needed
+        """
+        domain = urlparse(url).netloc
+        default_config = self.SITE_CONFIGS["default"]
+        matched_config = None
+
+        # Try to find a matching configuration
+        for config_key, config in self.SITE_CONFIGS.items():
+            if config_key == "default":
+                continue
+
+            # Check domain patterns
+            for pattern in config["domain_patterns"]:
+                if pattern in domain:
+                    matched_config = config
+                    break
+
+            # Check source name
+            if not matched_config and config["name"] == source_name:
+                matched_config = config
+
+            if matched_config:
+                break
+
+        # If no match found, use default
+        if not matched_config:
+            return default_config
+
+        # Create a new configuration that merges matched_config with default_config
+        # for any sections that are missing or empty in matched_config
+        merged_config = {}
+
+        for key, default_value in default_config.items():
+            # If the key doesn't exist in matched_config or if it's an empty list
+            if key not in matched_config or (isinstance(matched_config[key], list) and not matched_config[key]):
+                merged_config[key] = default_value
+            else:
+                merged_config[key] = matched_config[key]
+
+        return merged_config
+
+    def _extract_content(self, entry, url: str, site_config: Dict) -> str:
+        """
+        Extract full content from the entry using site configuration
 
         Args:
             entry: RSS feed entry
             url: Article URL
-            source_name: Name of the source
+            site_config: Site configuration dictionary
 
         Returns:
             Cleaned full content of the article
         """
         content = ""
-        domain = urlparse(url).netloc
 
-        # First check common RSS fields
-        if hasattr(entry, 'content_encoded'):
-            content = entry.content_encoded
-        elif hasattr(entry, 'content') and entry.content:
-            content = entry.content[0].value
-        elif hasattr(entry, 'fulltext'):
-            content = entry.fulltext
-
-        # If not found in common fields, check source-specific locations
-        if not content:
-            # Look for content:encoded field (used by some WordPress sites)
-            for key in entry.keys():
-                if key.endswith('encoded') and key != 'comments_encoded':
-                    content = entry[key]
+        # Try each content extractor in order
+        for extractor in site_config["content_extractors"]:
+            try:
+                content = extractor(entry)
+                if content:
                     break
+            except Exception as e:
+                logger.debug(f"Content extractor error: {str(e)}")
+                continue
 
-        # If still no content, fall back to summary or description
-        if not content and hasattr(entry, 'summary'):
-            content = entry.summary
-        elif not content and hasattr(entry, 'description'):
-            content = entry.description
+        # Apply content cleaners
+        content = self._clean_content(content, site_config)
 
-        # Source-specific extraction and cleaning
-        if 'korrespondent.net' in domain or source_name == 'Кореспондент':
-            # For Korrespondent, try to get fulltext if available
-            if hasattr(entry, 'fulltext'):
-                content = entry.fulltext
+        return content
 
-            # Clean content
-            content = self._clean_content(content)
+    def _extract_tags(self, entry, site_config: Dict) -> List[str]:
+        """
+        Extract tags from the entry using site configuration
 
-        elif 'tsn.ua' in domain or source_name == 'ТСН':
-            # For TSN, try to get fulltext if available
-            if hasattr(entry, 'fulltext'):
-                content = entry.fulltext
+        Args:
+            entry: RSS feed entry
+            site_config: Site configuration dictionary
 
-            # Clean content
-            content = self._clean_content(content)
+        Returns:
+            List of tags in lowercase
+        """
+        tags = []
 
-        elif 'pravda.com.ua' in domain or source_name == 'Українська правда':
-            # For Pravda, use content:encoded if available
-            for key in entry.keys():
-                if key.endswith('encoded') and key != 'comments_encoded':
-                    content = entry[key]
+        # Try each tag extractor in order
+        for extractor in site_config["tag_extractors"]:
+            try:
+                extracted_tags = extractor(entry)
+                if extracted_tags:
+                    # Convert all tags to lowercase
+                    tags.extend([tag.lower() for tag in extracted_tags])
                     break
+            except Exception as e:
+                logger.debug(f"Tag extractor error: {str(e)}")
+                continue
 
-            # Clean content
-            content = self._clean_content(content)
+        return tags
 
-        # For other sources, clean whatever content we have
-        return self._clean_content(content)
+    def _extract_category(self, entry, site_config: Dict) -> str:
+        """
+        Extract category from the entry using site configuration
 
-    def _clean_content(self, content: str) -> str:
+        Args:
+            entry: RSS feed entry
+            site_config: Site configuration dictionary
+
+        Returns:
+            Category string in lowercase
+        """
+        category = ""
+
+        # Try each category extractor in order
+        for extractor in site_config["category_extractors"]:
+            try:
+                extracted_category = extractor(entry)
+                if extracted_category:
+                    # Convert category to lowercase
+                    category = extracted_category.lower()
+                    break
+            except Exception as e:
+                logger.debug(f"Category extractor error: {str(e)}")
+                continue
+
+        return category
+
+    def _clean_content(self, content: str, site_config: Dict) -> str:
         """
         Clean article content from HTML tags and other unwanted elements
 
         Args:
             content: Raw article content
+            site_config: Site configuration dictionary
 
         Returns:
             Cleaned content
@@ -299,8 +356,13 @@ class RSSParser:
         # Remove extra spaces, tabs, and newlines
         text = re.sub(r'\s+', ' ', text).strip()
 
-        # Remove common patterns like "Read also: "
-        text = re.sub(r'Читайте також:.*?(?=\.|$)', '', text)
+        # Apply site-specific content cleaners
+        for cleaner in site_config["content_cleaners"]:
+            try:
+                text = cleaner(text)
+            except Exception as e:
+                logger.debug(f"Content cleaner error: {str(e)}")
+                continue
 
         return text
 
