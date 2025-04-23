@@ -61,6 +61,15 @@ Build the Docker images and start the services:
 docker compose up --build
 ```
 
+### Load predefined sources
+
+To automatically populate the database with a predefined list of news sources, use the management command below:
+
+```bash
+docker-compose exec web python manage.py load_sources
+```
+
+
 ## RSS Parsing
 
 The system supports collecting news from RSS feeds of various sources. Each active source in the database that has a valid `rss_url` can be automatically parsed using the built-in management command.
