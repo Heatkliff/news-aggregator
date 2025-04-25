@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Source, Category, News, Tag
+from .models import Source, Category, SiteCategory, News, Tag
 
 @admin.register(Source)
 class SourceAdmin(admin.ModelAdmin):
@@ -15,6 +15,12 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
 
+
+@admin.register(SiteCategory)
+class SiteCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category')
+    search_fields = ('name',)
+    autocomplete_fields = ('category',)
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
