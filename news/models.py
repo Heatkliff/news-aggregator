@@ -43,6 +43,8 @@ class SiteCategory(models.Model):
     Model representing an original news category from source
     """
     name = models.CharField(max_length=100, unique=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name="site_categories")
 
     class Meta:
         verbose_name = "Site Category"
