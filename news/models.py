@@ -8,7 +8,7 @@ class Source(models.Model):
     """
     Model representing a news source (website/publisher)
     """
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     url = models.URLField()
     rss_url = models.URLField(blank=True, null=True)
     needs_scraping = models.BooleanField(default=False)
@@ -23,7 +23,7 @@ class Category(models.Model):
     """
     Model representing a news category
     """
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
 
     class Meta:
@@ -86,7 +86,7 @@ class Tag(models.Model):
     """
     Model representing a tag for news article
     """
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     news = models.ManyToManyField(News, related_name='tags', blank=True)
 
