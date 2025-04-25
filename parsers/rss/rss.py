@@ -8,7 +8,7 @@ import feedparser
 from bs4 import BeautifulSoup
 from requests.exceptions import RequestException
 
-from news.models import News, Source, SiteCategory
+from news.models import News, Source
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -172,11 +172,6 @@ class RSSParser:
 
             # Get site category using the site configuration
             site_category = self._extract_category(entry, site_config)
-
-            # Create SiteCategory if not empty
-            if site_category:
-                category_obj, _ = SiteCategory.objects.get_or_create(name=site_category)
-                site_category = category_obj.name
 
             # Get tags using the site configuration
             tags = self._extract_tags(entry, site_config)
