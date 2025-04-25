@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Tuple, Any, Callable
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import feedparser
@@ -36,14 +36,19 @@ class RSSParser:
                 lambda entry: entry.get('description', '')
             ],
             "tag_extractors": [
-                lambda entry: [tag.strip() for key, val in entry.items() if 'tags' in key.lower() and isinstance(val, str) for tag in val.split(',') if tag.strip()],
-                lambda entry: [tag.term.strip() for tag in entry.get('tags', []) if hasattr(tag, 'term') and tag.term.strip()],
-                lambda entry: [entry.get('category', '').strip()] if entry.get('category') and isinstance(entry.get('category'), str) else [],
-                lambda entry: [cat.strip() for cat in entry.get('category', []) if cat and cat.strip()] if isinstance(entry.get('category'), list) else []
+                lambda entry: [tag.strip() for key, val in entry.items() if 'tags' in key.lower() and
+                               isinstance(val, str) for tag in val.split(',') if tag.strip()],
+                lambda entry: [tag.term.strip() for tag in entry.get('tags', []) if
+                               hasattr(tag, 'term') and tag.term.strip()],
+                lambda entry: [entry.get('category', '').strip()] if entry.get('category') and
+                                                                     isinstance(entry.get('category'), str) else [],
+                lambda entry: [cat.strip() for cat in entry.get('category', []) if cat and cat.strip()] if
+                isinstance(entry.get('category'), list) else []
             ],
             "category_extractors": [
                 lambda entry: entry.get('category', '').strip() if isinstance(entry.get('category'), str) else '',
-                lambda entry: entry.get('category', [''])[0].strip() if isinstance(entry.get('category'), list) and entry.get('category') else ''
+                lambda entry: entry.get('category', [''])[0].strip() if isinstance(entry.get('category'), list) and
+                                                                        entry.get('category') else ''
             ],
             "content_cleaners": []
         }
@@ -72,21 +77,23 @@ class RSSParser:
             return 0, 0
 
         total_sources = active_sources.count()
-        total_articles = 0
         all_articles = []
 
+        # Process each source and collect all articles
         for source in active_sources:
             logger.info(f"Processing source: {source.name}")
-            articles, count = self.parse_source(source)
+            articles, _ = self.parse_source(source)
             if articles:
                 all_articles.extend(articles)
-                total_articles += count
+
+        # Calculate total articles using list length
+        total_articles = len(all_articles)
 
         # Save all articles to JSON file
         if all_articles:
             with open(self.output_file, 'w', encoding='utf-8') as f:
                 json.dump(all_articles, f, ensure_ascii=False, indent=4)
-            logger.info(f"Saved {len(all_articles)} articles to {self.output_file}")
+            logger.info(f"Saved {total_articles} articles to {self.output_file}")
         else:
             logger.warning("No articles parsed, JSON file not created")
 
@@ -114,14 +121,12 @@ class RSSParser:
                 logger.warning(f"No entries found in feed: {source.name}")
                 return [], 0
 
-            articles = []
-            count = 0
+            # Process entries and filter out None results
+            articles = [article for entry in feed.entries
+                        if (article := self._process_entry(entry, source)) is not None]
 
-            for entry in feed.entries:
-                article = self._process_entry(entry, source)
-                if article:
-                    articles.append(article)
-                    count += 1
+            # Count articles using list length
+            count = len(articles)
 
             logger.info(f"Parsed {count} articles from {source.name}")
             return articles, count
@@ -146,7 +151,7 @@ class RSSParser:
         """
         try:
             # Extract URL
-            url = entry.link if hasattr(entry, 'link') else None
+            url = getattr(entry, 'link', None)
             if not url:
                 logger.warning("Entry has no URL, skipping")
                 return None
@@ -157,7 +162,7 @@ class RSSParser:
                 return None
 
             # Extract title
-            title = entry.title if hasattr(entry, 'title') else "Untitled"
+            title = getattr(entry, 'title', "Untitled")
 
             # Get site configuration based on URL
             site_config = self._get_site_config(url, source.name)
@@ -206,40 +211,30 @@ class RSSParser:
         """
         domain = urlparse(url).netloc
         default_config = self.SITE_CONFIGS["default"]
-        matched_config = None
 
-        # Try to find a matching configuration
+        # First check for exact source name match, then domain patterns
         for config_key, config in self.SITE_CONFIGS.items():
             if config_key == "default":
                 continue
 
-            # Check domain patterns
-            for pattern in config["domain_patterns"]:
-                if pattern in domain:
-                    matched_config = config
-                    break
-
-            # Check source name
-            if not matched_config and config["name"] == source_name:
+            # Check if source name matches
+            if config["name"] == source_name:
                 matched_config = config
-
-            if matched_config:
                 break
 
-        # If no match found, use default
-        if not matched_config:
+            # Check domain patterns
+            if any(pattern in domain for pattern in config["domain_patterns"]):
+                matched_config = config
+                break
+        else:  # If loop completes without a break
+            # If no match found, use default config
             return default_config
 
-        # Create a new configuration that merges matched_config with default_config
-        # for any sections that are missing or empty in matched_config
-        merged_config = {}
-
-        for key, default_value in default_config.items():
-            # If the key doesn't exist in matched_config or if it's an empty list
-            if key not in matched_config or (isinstance(matched_config[key], list) and not matched_config[key]):
-                merged_config[key] = default_value
-            else:
-                merged_config[key] = matched_config[key]
+        # Create a merged configuration dictionary
+        merged_config = {
+            key: matched_config.get(key) or default_value
+            for key, default_value in default_config.items()
+        }
 
         return merged_config
 
