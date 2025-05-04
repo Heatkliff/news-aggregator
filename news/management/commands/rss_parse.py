@@ -1,3 +1,4 @@
+import json
 import os
 
 from django.conf import settings
@@ -36,20 +37,21 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Starting RSS parsing..."))
 
         try:
-            sources, articles = run_rss_parser(
-                output_file=output_file
-            )
+            sources, articles = run_rss_parser()
 
             if sources == 0:
                 self.stdout.write(self.style.WARNING("No sources were processed."))
             else:
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"Successfully processed {sources} source(s) and found {articles} article(s)"
+                        f"Successfully processed {sources} source(s) and found {len(articles)} article(s)"
                     )
                 )
 
-            if articles > 0:
+            # Save articles to JSON file if there are any
+            if articles:
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    json.dump(articles, f, ensure_ascii=False, indent=4)
                 self.stdout.write(
                     self.style.SUCCESS(f"Results saved to: {output_file}")
                 )

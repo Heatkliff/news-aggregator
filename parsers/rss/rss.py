@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 from typing import Dict, List, Optional, Tuple
@@ -54,27 +53,24 @@ class RSSParser:
         }
     }
 
-    def __init__(self, output_file: str = 'parsed_news.json'):
+    def __init__(self):
         """
         Initialize the RSS parser
-
-        Args:
-            output_file: Path to the output JSON file
         """
-        self.output_file = output_file
+        pass
 
-    def parse_all_active_sources(self) -> Tuple[int, int]:
+    def parse_all_active_sources(self) -> Tuple[int, List[Dict]]:
         """
         Parse all active sources with RSS URLs from the database
 
         Returns:
-            Tuple containing count of processed sources and new articles
+            Tuple containing count of processed sources and list of parsed articles
         """
         active_sources = Source.objects.filter(active=True).exclude(rss_url__isnull=True).exclude(rss_url='')
 
         if not active_sources:
             logger.warning("No active sources with RSS URLs found in the database")
-            return 0, 0
+            return 0, []
 
         total_sources = active_sources.count()
         all_articles = []
@@ -82,24 +78,17 @@ class RSSParser:
         # Process each source and collect all articles
         for source in active_sources:
             logger.info(f"Processing source: {source.name}")
-            articles, _ = self.parse_source(source)
+            articles = self.parse_source(source)
             if articles:
                 all_articles.extend(articles)
 
         # Calculate total articles using list length
         total_articles = len(all_articles)
+        logger.info(f"Parsed {total_articles} articles from {total_sources} sources")
 
-        # Save all articles to JSON file
-        if all_articles:
-            with open(self.output_file, 'w', encoding='utf-8') as f:
-                json.dump(all_articles, f, ensure_ascii=False, indent=4)
-            logger.info(f"Saved {total_articles} articles to {self.output_file}")
-        else:
-            logger.warning("No articles parsed, JSON file not created")
+        return total_sources, all_articles
 
-        return total_sources, total_articles
-
-    def parse_source(self, source: Source) -> Tuple[List[Dict], int]:
+    def parse_source(self, source: Source) -> List[Dict]:
         """
         Parse RSS feed for a specific source
 
@@ -107,7 +96,7 @@ class RSSParser:
             source: Source model instance
 
         Returns:
-            Tuple containing list of parsed articles and count of new articles
+            List of parsed articles
         """
         try:
             logger.info(f"Fetching RSS feed from: {source.rss_url}")
@@ -115,11 +104,11 @@ class RSSParser:
 
             if hasattr(feed, 'bozo_exception'):
                 logger.error(f"Error parsing feed {source.name}: {feed.bozo_exception}")
-                return [], 0
+                return []
 
             if not feed.entries:
                 logger.warning(f"No entries found in feed: {source.name}")
-                return [], 0
+                return []
 
             # Process entries and filter out None results
             articles = [article for entry in feed.entries
@@ -129,14 +118,14 @@ class RSSParser:
             count = len(articles)
 
             logger.info(f"Parsed {count} articles from {source.name}")
-            return articles, count
+            return articles
 
         except RequestException as e:
             logger.error(f"Request error for {source.name}: {str(e)}")
-            return [], 0
+            return []
         except Exception as e:
             logger.error(f"Error parsing {source.name}: {str(e)}")
-            return [], 0
+            return []
 
     def _process_entry(self, entry, source: Source) -> Optional[Dict]:
         """
@@ -357,21 +346,18 @@ class RSSParser:
         return text
 
 
-def run_rss_parser(output_file: str = 'parsed_news.json') -> Tuple[int, int]:
+def run_rss_parser() -> Tuple[int, List[Dict]]:
     """
     Run the RSS parser to fetch news articles
 
-    Args:
-        output_file: Path to the output JSON file
-
     Returns:
-        Tuple containing count of processed sources and new articles
+        Tuple containing count of processed sources and list of parsed articles
     """
-    parser = RSSParser(output_file)
+    parser = RSSParser()
     return parser.parse_all_active_sources()
 
 
 if __name__ == "__main__":
     # This allows running the script directly for testing
     sources, articles = run_rss_parser()
-    print(f"Processed {sources} sources and found {articles} new articles")
+    print(f"Processed {sources} sources and found {len(articles)} new articles")
