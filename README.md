@@ -82,11 +82,35 @@ To fetch and parse RSS articles from all active sources stored in the database, 
 docker-compose exec web python manage.py rss_parse
 ```
 
-This command will:
+By default, this command will:
 - Load all active `Source` objects with non-empty `rss_url`
 - Use a site-specific configuration if defined (or fall back to a default config)
 - Extract content, tags, and categories
-- Store the parsed articles in the database or output them to a JSON file during development
+- Store the parsed articles in Redis under the key `rss_parsed_articles`
+
+### Command Options
+
+You can customize how the RSS parsing results are stored:
+
+**Save to Redis (default):**
+```
+docker-compose exec web python manage.py rss_parse
+```
+
+**Save to Redis with custom key:**
+```
+docker-compose exec web python manage.py rss_parse --redis-key="custom_key_name"
+```
+
+**Save to JSON file instead of Redis:**
+```
+docker-compose exec web python manage.py rss_parse --json
+```
+
+**Save to JSON file with custom filename:**
+```
+docker-compose exec web python manage.py rss_parse --json --output="custom_filename.json"
+```
 
 ### Customizing RSS Extraction Per Site
 
@@ -131,7 +155,6 @@ If no match is found for a given source domain or name, the default configuratio
 ```
 
 This setup allows easy per-source customization of parsing behavior without hardcoding logic.
-
 
 
 ### Database Population Commands
