@@ -145,13 +145,15 @@ class RSSParser:
                 logger.warning("Entry has no URL, skipping")
                 return None
 
-            # Check if this URL already exists in the database
-            if News.objects.filter(url=url).exists():
-                logger.debug(f"Article with URL {url} already exists, skipping")
-                return None
-
-            # Extract title
+            # Extract title and limit to 480 characters
             title = getattr(entry, 'title', "Untitled")
+            if len(title) > 480:
+                title = title[:480]
+
+            # Check if an article with this title already exists in the database
+            if News.objects.filter(title=title).exists():
+                logger.debug(f"Article with title '{title}' already exists, skipping")
+                return None
 
             # Get site configuration based on URL
             site_config = self._get_site_config(url, source.name)
