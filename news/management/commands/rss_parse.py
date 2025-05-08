@@ -36,6 +36,54 @@ class Command(BaseCommand):
             help='Redis key to store the parsed articles (only used with Redis storage)'
         )
 
+    def save_to_json(self, articles, output_file):
+        """
+        Save articles to a JSON file
+        
+        Args:
+            articles (list): List of article dictionaries to save
+            output_file (str): Path to the output JSON file
+        """
+        # If the output path is not absolute, make it relative to the project base
+        if not os.path.isabs(output_file):
+            output_file = os.path.join(settings.BASE_DIR, output_file)
+            
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(articles, f, ensure_ascii=False, indent=4)
+        self.stdout.write(
+            self.style.SUCCESS(f"Results saved to JSON file: {output_file}")
+        )
+
+    def save_to_redis(self, articles, redis_key):
+        """
+        Save articles to Redis
+        
+        Args:
+            articles (list): List of article dictionaries to save
+            redis_key (str): Redis key to store the articles
+        """
+        try:
+            # Get Redis connection parameters from settings
+            redis_host = getattr(settings, 'REDIS_HOST', 'localhost')
+            redis_port = getattr(settings, 'REDIS_PORT', 6379)
+            redis_db = getattr(settings, 'REDIS_DB', 0)
+
+            # Connect to Redis
+            r = redis.Redis(
+                host=redis_host,
+                port=redis_port,
+                db=redis_db,
+                decode_responses=False
+            )
+
+            # Save articles to Redis
+            r.set(redis_key, json.dumps(articles, ensure_ascii=False))
+            self.stdout.write(
+                self.style.SUCCESS(f"Results saved to Redis with key: {redis_key}")
+            )
+        except Exception as e:
+            raise CommandError(f"Error saving to Redis: {str(e)}")
+
     def handle(self, *args, **options):
         """
         Execute the command
@@ -43,10 +91,6 @@ class Command(BaseCommand):
         use_json = options['json']
         output_file = options['output']
         redis_key = options['redis_key']
-
-        # If the output path is not absolute, make it relative to the project base
-        if use_json and not os.path.isabs(output_file):
-            output_file = os.path.join(settings.BASE_DIR, output_file)
 
         self.stdout.write(self.style.SUCCESS(f"Starting RSS parsing..."))
 
@@ -65,35 +109,9 @@ class Command(BaseCommand):
             # Save articles to JSON file or Redis if there are any
             if articles:
                 if use_json:
-                    # Save to JSON file
-                    with open(output_file, 'w', encoding='utf-8') as f:
-                        json.dump(articles, f, ensure_ascii=False, indent=4)
-                    self.stdout.write(
-                        self.style.SUCCESS(f"Results saved to JSON file: {output_file}")
-                    )
+                    self.save_to_json(articles, output_file)
                 else:
-                    # Save to Redis
-                    try:
-                        # Get Redis connection parameters from settings
-                        redis_host = getattr(settings, 'REDIS_HOST', 'localhost')
-                        redis_port = getattr(settings, 'REDIS_PORT', 6379)
-                        redis_db = getattr(settings, 'REDIS_DB', 0)
-
-                        # Connect to Redis
-                        r = redis.Redis(
-                            host=redis_host,
-                            port=redis_port,
-                            db=redis_db,
-                            decode_responses=False
-                        )
-
-                        # Save articles to Redis
-                        r.set(redis_key, json.dumps(articles, ensure_ascii=False))
-                        self.stdout.write(
-                            self.style.SUCCESS(f"Results saved to Redis with key: {redis_key}")
-                        )
-                    except Exception as e:
-                        raise CommandError(f"Error saving to Redis: {str(e)}")
+                    self.save_to_redis(articles, redis_key)
             else:
                 self.stdout.write(self.style.WARNING("No articles found, data not saved"))
 
