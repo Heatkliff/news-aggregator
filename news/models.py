@@ -129,7 +129,7 @@ class Tag(models.Model):
     """
     Model representing a tag for news article
     """
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=150, unique=True)
     news = models.ManyToManyField(News, related_name='tags', blank=True)
 
