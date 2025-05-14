@@ -24,12 +24,17 @@ class SiteCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
-    list_display = ('title', 'source', 'created_at')
+    list_display = ('title', 'source', 'created_at', 'display_tags')
     list_filter = ('source', 'site_categories')
     search_fields = ('title', 'content')
     prepopulated_fields = {'slug': ('title',)}
     date_hierarchy = 'created_at'
-    filter_horizontal = ('site_categories',)
+    filter_horizontal = ('site_categories', 'tags')
+    
+    def display_tags(self, obj):
+        return ", ".join([tag.name for tag in obj.tags.all()])
+    
+    display_tags.short_description = "Tags"
 
 
 @admin.register(Tag)
