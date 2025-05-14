@@ -129,11 +129,18 @@ class NewsImporter:
                                 if not tag_name:  # Skip empty tag names
                                     continue
 
+                                # Convert to lowercase for consistency
                                 tag_name = tag_name.lower().strip()
+                                # Delete apostrophes
+                                tag_name = tag_name.translate(str.maketrans('', '', "'’`ʼ"))
 
-                                # Try to get existing tag or create new one
-                                tag, created = Tag.objects.get_or_create(name=tag_name)
-                                news.tags.add(tag)
+                                try:
+                                    # Try to get the existing tag by the lowercase name
+                                    tag, created = Tag.objects.get_or_create(name=tag_name)
+                                    news.tags.add(tag)
+                                except Exception as e:
+                                    logger.error(f"Error processing tag '{tag_name}': {str(e)}")
+                                    logger.error(f"Error details: {e}", exc_info=True)
 
                     except Exception as e:
                         logger.error(f"Database error while saving: {str(e)}", exc_info=True)
