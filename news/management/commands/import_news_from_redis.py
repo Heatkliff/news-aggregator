@@ -7,6 +7,7 @@ from django.db import transaction
 import redis
 
 from django.conf import settings
+from news.models import News, Source, SiteCategory, Tag
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,6 @@ class NewsImporter:
         Import news from Redis to the database
         Returns statistics of the import operation
         """
-        from ...models import News, Source, SiteCategory, Tag  # Import here to avoid circular imports
 
         news_data = self.get_news_from_redis(key)
         stats = {"imported": 0, "skipped": 0, "errors": 0}
