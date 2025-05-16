@@ -156,6 +156,58 @@ If no match is found for a given source domain or name, the default configuratio
 
 This setup allows easy per-source customization of parsing behavior without hardcoding logic.
 
+## Importing News from Redis to Database
+
+After parsing RSS feeds, the news data is stored in Redis. To import this data into the PostgreSQL database, use the `import_news_from_redis` management command.
+
+### Basic Usage
+
+To import news from Redis with default settings:
+
+```bash
+docker-compose exec web python manage.py import_news_from_redis
+```
+
+By default, this command will:
+- Read news data from Redis using the key `rss_parsed_news`
+- Import only new articles (duplicates are skipped based on title/slug)
+- Add site categories and tags as specified in the parsed data
+- Preserve the original Redis data after import
+
+### Command Options
+
+**Import with custom Redis key:**
+```bash
+docker-compose exec web python manage.py import_news_from_redis --key="custom_redis_key"
+```
+
+**Clear Redis data after successful import:**
+```bash
+docker-compose exec web python manage.py import_news_from_redis --clear
+```
+
+**Delete all existing news before import (use with caution):**
+```bash
+docker-compose exec web python manage.py import_news_from_redis --delete-existing
+```
+
+**Combine multiple options:**
+```bash
+docker-compose exec web python manage.py import_news_from_redis --key="custom_key" --clear --delete-existing
+```
+
+### Import Process
+
+The import process:
+1. Retrieves news data from Redis
+2. Skips duplicate articles (based on title slug)
+3. Creates new News objects with proper associations to Source
+4. Associates site categories and tags
+5. Reports statistics about imported, skipped, and error items
+6. Optionally clears Redis data if requested
+
+This command is typically used after running the `rss_parse` command to complete the pipeline from RSS feeds to database storage.
+
 
 ### Database Population Commands
 
