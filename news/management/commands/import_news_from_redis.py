@@ -23,6 +23,51 @@ class NewsImporter:
         redis_port = getattr(settings, 'REDIS_PORT', 6379)
         self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
 
+    def _parse_redis_data(self, raw_data: bytes) -> List[Dict]:
+        """
+        Parse raw bytes data from Redis into a list of news items.
+        """
+        try:
+            parsed_data = json.loads(raw_data)
+
+            # Case 1: Direct list of news items
+            if isinstance(parsed_data, list) and not (len(parsed_data) > 0 and isinstance(parsed_data[0], dict)
+                                                      and 'value' in parsed_data[0]):
+                logger.info(f"Parsed data as direct list with {len(parsed_data)} items")
+                return parsed_data
+
+            # Case 2: List with 'value' key in first item
+            if (isinstance(parsed_data, list) and len(parsed_data) > 0 and isinstance(parsed_data[0], dict)
+                    and 'value' in parsed_data[0]):
+                value_content = parsed_data[0]['value']
+
+                if isinstance(value_content, str):
+                    # Value is a JSON string that needs parsing
+                    final_data = json.loads(value_content)
+                    logger.info(f"Successfully parsed data from Redis 'value' field: {len(final_data)} items")
+                    return final_data
+                elif isinstance(value_content, list):
+                    # Value is already a list
+                    logger.info(f"Using value content directly: {len(value_content)} items")
+                    return value_content
+                else:
+                    # Value is something else, wrap it in a list
+                    logger.info(f"Value content is not a string or list, wrapping in list")
+                    return [value_content]
+
+            # Case 3: Single object, not a list
+            if isinstance(parsed_data, dict):
+                logger.info("Parsed data as single object, wrapping in list")
+                return [parsed_data]
+
+            # Case 4: Empty or unrecognized format
+            logger.warning(f"Unrecognized data format, returning empty list")
+            return []
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON data: {str(e)}")
+            return []
+
     def get_news_from_redis(self, key: str = "rss_parsed_news") -> List[Dict]:
         """
         Retrieve news data from Redis
@@ -30,6 +75,7 @@ class NewsImporter:
         try:
             logger.info(f"Retrieving data from Redis with key: {key}")
             data = self.redis_client.get(key)
+
             if not data:
                 logger.warning(f"No data found in Redis with key: {key}")
                 # Check if similar keys exist
@@ -39,34 +85,7 @@ class NewsImporter:
                 return []
 
             logger.debug(f"Retrieved raw data from Redis")
-
-            try:
-                # Try to parse as a JSON array
-                parsed_data = json.loads(data)
-
-                # Check if it's a list with a single item containing a 'value' key
-                if parsed_data and isinstance(parsed_data, list) and len(parsed_data) > 0:
-                    if isinstance(parsed_data[0], dict) and 'value' in parsed_data[0]:
-                        value_content = parsed_data[0]['value']
-                        if isinstance(value_content, str):
-                            final_data = json.loads(value_content)
-                            logger.info(f"Successfully parsed data from Redis: {len(final_data)} items")
-                            return final_data
-                        else:
-                            logger.info(f"Value content is not a string, returning as is")
-                            return value_content
-
-                # If structure is different than expected
-                logger.info(f"Using default parsing approach")
-                if isinstance(parsed_data, list):
-                    return parsed_data
-                else:
-                    # If it's not a list, return it wrapped in a list
-                    return [parsed_data]
-
-            except json.JSONDecodeError as e:
-                logger.error(f"Error parsing JSON data: {str(e)}")
-                return []
+            return self._parse_redis_data(data)
 
         except Exception as e:
             logger.error(f"Error retrieving data from Redis: {str(e)}")
