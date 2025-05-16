@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -91,15 +91,121 @@ class NewsImporter:
             logger.error(f"Error retrieving data from Redis: {str(e)}")
             return []
 
+    def _get_or_create_site_category(self, category_name: str) -> Optional[SiteCategory]:
+        """
+        Get or create a site category
+        """
+        if not category_name:
+            return None
+
+        category_name = category_name.lower().strip()
+        category_slug = SiteCategory.get_safe_slug(category_name)
+
+        if not category_slug:
+            return None
+
+        site_category, created = SiteCategory.objects.get_or_create(
+            slug=category_slug,
+            defaults={'name': category_name}
+        )
+
+        if created:
+            logger.debug(f"Created new site category: {category_name}")
+
+        return site_category
+
+    def _get_or_create_tag(self, tag_name: str) -> Optional[Tag]:
+        """
+        Get or create a tag
+        """
+        if not tag_name:
+            return None
+
+        tag_name = tag_name.lower().strip()
+        tag_slug = Tag.get_safe_slug(tag_name)
+
+        if not tag_slug:
+            return None
+
+        try:
+            tag, created = Tag.objects.get_or_create(
+                slug=tag_slug,
+                defaults={'name': tag_name}
+            )
+
+            if created:
+                logger.debug(f"Created new tag: {tag_name}")
+
+            return tag
+        except Exception as e:
+            logger.error(f"Error creating tag '{tag_name}' (slug: {tag_slug}): {str(e)}")
+            return None
+
+    def _process_single_news_item(self, item: Dict) -> bool:
+        """
+        Process and save a single news item
+        Returns True if import was successful, False otherwise
+        """
+        # Skip if no title
+        if not item.get('title'):
+            logger.warning("Skipping item with missing title")
+            return False
+
+        logger.info(f"Processing news item: {item.get('title', 'Unknown title')[:50]}...")
+
+        # Generate slug for checking if news already exists
+        news_slug = News.get_safe_slug(item['title'])
+
+        # Skip if news already exists (checking by slug)
+        if News.objects.filter(slug=news_slug).exists():
+            logger.info(f"News already exists with slug: {news_slug[:50]}...")
+            return False
+
+        try:
+            # Get source
+            source = Source.objects.get(name=item['source'])
+
+            # Create the news object
+            news = News.objects.create(
+                title=item['title'],
+                content=item['content'],
+                url=item['url'],
+                source=source
+            )
+
+            # Handle site category
+            if 'site_category' in item and item['site_category']:
+                site_category = self._get_or_create_site_category(item['site_category'])
+                if site_category:
+                    news.site_categories.add(site_category)
+
+            # Handle tags
+            if 'tags' in item and item['tags'] and isinstance(item['tags'], list):
+                for tag_name in item['tags']:
+                    tag = self._get_or_create_tag(tag_name)
+                    if tag:
+                        news.tags.add(tag)
+
+            logger.info(f"Successfully imported news: {news.title[:50]}...")
+            return True
+
+        except Source.DoesNotExist:
+            logger.error(f"Source not found: {item.get('source')}")
+            return False
+        except Exception as e:
+            logger.error(f"Error importing news: {str(e)}", exc_info=True)
+            logger.debug(f"Problematic data: {item}")
+            return False
+
     @transaction.atomic
     def import_news(self, key: str = "rss_parsed_news") -> Dict:
         """
         Import news from Redis to the database
         Returns statistics of the import operation
         """
-
         news_data = self.get_news_from_redis(key)
         stats = {"imported": 0, "skipped": 0, "errors": 0}
+
         if not news_data:
             logger.warning("No news data found to import")
             return stats
@@ -108,70 +214,15 @@ class NewsImporter:
 
         for item in news_data:
             try:
-                # Skip if no title
-                if not item.get('title'):
-                    logger.warning("Skipping item with missing title")
-                    stats["skipped"] += 1
-                    continue
-
-                logger.info(f"Processing news item: {item.get('title', 'Unknown title')[:50]}...")
-
-                # Skip if news already exists (checking by title)
-                if News.objects.filter(title=item['title']).exists():
-                    logger.info(f"News already exists: {item['title'][:50]}...")
-                    stats["skipped"] += 1
-                    continue
-
-                # Get source
-                source = Source.objects.get(name=item['source'])
-
-                # Create news with transaction to ensure atomicity
                 with transaction.atomic():
-                    try:
-                        news = News.objects.create(
-                            title=item['title'],
-                            content=item['content'],
-                            url=item['url'],
-                            source=source
-                        )
-
-                        # Handle site category
-                        if 'site_category' in item and item['site_category']:
-                            site_category, created = SiteCategory.objects.get_or_create(
-                                name=item['site_category'].lower()
-                            )
-                            news.site_categories.add(site_category)
-
-                        # Handle tags
-                        if 'tags' in item and item['tags'] and isinstance(item['tags'], list):
-                            for tag_name in item['tags']:
-                                if not tag_name:  # Skip empty tag names
-                                    continue
-
-                                # Convert to lowercase for consistency
-                                tag_name = tag_name.lower().strip()
-                                # Delete apostrophes
-                                tag_name = tag_name.translate(str.maketrans('', '', "'’`ʼ"))
-
-                                try:
-                                    # Try to get the existing tag by the lowercase name
-                                    tag, created = Tag.objects.get_or_create(name=tag_name)
-                                    news.tags.add(tag)
-                                except Exception as e:
-                                    logger.error(f"Error processing tag '{tag_name}': {str(e)}")
-                                    logger.error(f"Error details: {e}", exc_info=True)
-
-                    except Exception as e:
-                        logger.error(f"Database error while saving: {str(e)}", exc_info=True)
-                        raise
-
-                stats["imported"] += 1
-                logger.info(f"Successfully imported news: {news.title[:50]}...")
-
+                    result = self._process_single_news_item(item)
+                    if result:
+                        stats["imported"] += 1
+                    else:
+                        stats["skipped"] += 1
             except Exception as e:
                 stats["errors"] += 1
-                logger.error(f"Error importing news: {str(e)}", exc_info=True)
-                logger.debug(f"Problematic data: {item}")
+                logger.error(f"Unexpected error during news import: {str(e)}", exc_info=True)
 
         return stats
 
@@ -211,7 +262,6 @@ class Command(BaseCommand):
 
         # Optional: Delete all existing news
         if delete_existing:
-            from ...models import News
             count = News.objects.all().count()
             News.objects.all().delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing news"))
