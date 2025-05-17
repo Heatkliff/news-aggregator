@@ -8,9 +8,10 @@ class BaseModel(models.Model):
     """
     Abstract base model with common methods for all models
     """
+
     class Meta:
         abstract = True
-        
+
     @classmethod
     def get_field_max_length(cls, field_name):
         """
@@ -25,12 +26,12 @@ class BaseModel(models.Model):
         """
         if not value:
             return value
-            
+
         max_length = cls.get_field_max_length(field_name)
         if len(value) > max_length:
             return value[:max_length]
         return value
-        
+
     @classmethod
     def get_safe_slug(cls, text, slug_field='slug'):
         """
@@ -38,10 +39,10 @@ class BaseModel(models.Model):
         """
         if not text:
             return ""
-            
+
         base_slug = slugify(text)
         max_length = cls.get_field_max_length(slug_field)
-        
+
         if len(base_slug) > max_length:
             return base_slug[:max_length]
         return base_slug
@@ -97,7 +98,7 @@ class SiteCategory(BaseModel):
 
     def __str__(self):
         return self.name
-        
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = self.get_safe_slug(self.name)
@@ -127,13 +128,13 @@ class News(BaseModel):
         # Ensure fields are within limits
         if self.title:
             self.title = self.truncate_for_field(self.title, 'title')
-            
+
         if self.content:
             self.content = self.truncate_for_field(self.content, 'content')
-            
+
         if self.url:
             self.url = self.truncate_for_field(self.url, 'url')
-        
+
         if not self.slug:
             base_slug = self.get_safe_slug(self.title)
 
@@ -162,8 +163,26 @@ class Tag(BaseModel):
     def save(self, *args, **kwargs):
         if self.name:
             self.name = self.truncate_for_field(self.name, 'name')
-            
+
         if not self.slug:
             self.slug = self.get_safe_slug(self.name)
 
         super().save(*args, **kwargs)
+
+
+class LogStats(BaseModel):
+    """
+    Model for tracking news import statistics
+    """
+    imported = models.IntegerField(default=0)
+    skipped = models.IntegerField(default=0)
+    errors = models.IntegerField(default=0)
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Statistics"
+        verbose_name_plural = "Statistics"
+
+    def __str__(self):
+        return f"Import {self.started_at.strftime('%Y-%m-%d %H:%M:%S')} - {self.imported} imported"

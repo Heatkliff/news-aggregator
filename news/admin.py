@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Source, Category, SiteCategory, News, Tag
+from .models import Source, Category, SiteCategory, News, Tag, LogStats
+
 
 @admin.register(Source)
 class SourceAdmin(admin.ModelAdmin):
@@ -43,3 +44,7 @@ class TagAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
     filter_horizontal = ('news',)
+
+@admin.register(LogStats)
+class ImportStatsAdmin(admin.ModelAdmin):
+    list_display = ('started_at', 'completed_at', 'imported', 'skipped', 'errors')
