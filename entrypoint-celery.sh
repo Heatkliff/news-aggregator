@@ -3,6 +3,9 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Ensure Django settings are configured
+export DJANGO_SETTINGS_MODULE=news_aggregator.settings
+
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL..."
 while ! timeout 1 bash -c "</dev/tcp/$DB_HOST/$DB_PORT"; do

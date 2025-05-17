@@ -20,6 +20,8 @@ services:
       - REDIS_PORT=${REDIS_PORT}
       - CELERY_BROKER_URL=redis://redis:${REDIS_PORT}/0
       - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PORT}/0
+      - DJANGO_SETTINGS_MODULE=news_aggregator.settings
+      - PYTHONPATH=/app
     depends_on:
       - db
       - redis
@@ -63,6 +65,8 @@ services:
       - REDIS_PORT=${REDIS_PORT}
       - CELERY_BROKER_URL=redis://redis:${REDIS_PORT}/0
       - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PORT}/0
+      - DJANGO_SETTINGS_MODULE=news_aggregator.settings
+      - PYTHONPATH=/app
     depends_on:
       - web
       - db
@@ -87,6 +91,8 @@ services:
       - REDIS_PORT=${REDIS_PORT}
       - CELERY_BROKER_URL=redis://redis:${REDIS_PORT}/0
       - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PORT}/0
+      - DJANGO_SETTINGS_MODULE=news_aggregator.settings
+      - PYTHONPATH=/app
     depends_on:
       - web
       - db
