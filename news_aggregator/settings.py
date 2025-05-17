@@ -134,9 +134,9 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
     'process-news-every-30-minutes': {
         'task': 'news.tasks.process_news_chain',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=30),
         'options': {
-            'expires': 60 * 4,  # Task expires after 29 minutes
+            'expires': 60 * 29,  # Task expires after 29 minutes
         },
     },
 }
