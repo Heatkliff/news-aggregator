@@ -22,6 +22,7 @@ class NewsImporter:
         redis_host = getattr(settings, 'REDIS_HOST', 'redis')
         redis_port = getattr(settings, 'REDIS_PORT', 6379)
         self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
+        self.stats = {"imported": 0, "skipped": 0, "errors": 0}
 
     def _parse_redis_data(self, raw_data: bytes) -> List[Dict]:
         """
@@ -203,12 +204,14 @@ class NewsImporter:
         Import news from Redis to the database
         Returns statistics of the import operation
         """
+
+        self.stats = {"imported": 0, "skipped": 0, "errors": 0}
+
         news_data = self.get_news_from_redis(key)
-        stats = {"imported": 0, "skipped": 0, "errors": 0}
 
         if not news_data:
             logger.warning("No news data found to import")
-            return stats
+            return self.stats
 
         logger.info(f"Found {len(news_data)} news items to process")
 
@@ -217,14 +220,14 @@ class NewsImporter:
                 with transaction.atomic():
                     result = self._process_single_news_item(item)
                     if result:
-                        stats["imported"] += 1
+                        self.stats["imported"] += 1
                     else:
-                        stats["skipped"] += 1
+                        self.stats["skipped"] += 1
             except Exception as e:
-                stats["errors"] += 1
+                self.stats["errors"] += 1
                 logger.error(f"Unexpected error during news import: {str(e)}", exc_info=True)
 
-        return stats
+        return self.stats
 
 
 class Command(BaseCommand):
@@ -269,14 +272,18 @@ class Command(BaseCommand):
         importer = NewsImporter()
         stats = importer.import_news(redis_key)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"News import completed. Imported: {stats['imported']}, "
-                f"Skipped: {stats['skipped']}, Errors: {stats['errors']}"
-            )
+        success_message = (
+            f"News import completed. Imported: {stats['imported']}, "
+            f"Skipped: {stats['skipped']}, Errors: {stats['errors']}"
         )
+        self.stdout.write(self.style.SUCCESS(success_message))
 
         # Clear Redis after successful import if requested
         if clear_after_import and stats['imported'] > 0:
             importer.redis_client.delete(redis_key)
             self.stdout.write(self.style.SUCCESS(f"Cleared Redis key: {redis_key}"))
+
+        # Store stats in Django settings for Celery tasks to access
+        setattr(settings, '_IMPORT_NEWS_STATS', stats)
+
+        return None
