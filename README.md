@@ -232,37 +232,3 @@ Clears all existing data and creates 100 news articles:
 ```
 docker-compose exec web python manage.py populate_db --clear --news_count=100
 ```
-
-## Development
-
-### Manual Setup (without Docker)
-
-1. Create a virtual environment:
-```
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-2. Install dependencies:
-```
-pip install -r requirements.txt
-```
-
-3. Set up environment variables (see above)
-
-4. Run migrations:
-```
-python manage.py migrate
-```
-
-5. Start the development server:
-```
-python manage.py runserver
-```
-
-### Testing
-
-Run tests with:
-```
-python manage.py test
-```
