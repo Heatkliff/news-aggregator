@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ news.title }} - News Aggregator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- News Article -->
+        <article>
+            <h1 class="mb-3">{{ news.title }}</h1>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <span class="text-muted">Source: </span>
+                    <a href="{% url 'source_list' %}#{{ news.source.id }}" class="text-decoration-none">{{ news.source.name }}</a>
+                </div>
+                <div class="text-muted">{{ news.created_at|date:"F d, Y" }}</div>
+            </div>
+            
+            {% if news.tags.exists %}
+            <div class="mb-4">
+                {% for tag in news.tags.all %}
+                <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="news-content mb-5">
+                <p>{{ news.content|linebreaks }}</p>
+            </div>
+            
+            {% if news.url %}
+            <div class="mb-4">
+                <a href="{{ news.url }}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                    Read original article
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- Categories -->
+            {% if news.site_categories.exists %}
+            <div class="mb-4">
+                <h5>Categories:</h5>
+                <div>
+                    {% for category in news.site_categories.all %}
+                    {% if category.category %}
+                    <a href="{% url 'index' %}?category={{ category.category.slug }}" class="badge bg-dark text-decoration-none me-1">
+                        {{ category.category.name }}
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </article>
+        
+        <!-- Related News -->
+        {% if related_news %}
+        <div class="related-news my-5">
+            <h3 class="mb-3">Related News</h3>
+            <div class="list-group">
+                {% for related in related_news %}
+                <a href="{% url 'news_detail' related.slug %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ related.title }}</h5>
+                        <small>{{ related.created_at|date:"M d" }}</small>
+                    </div>
+                    <p class="mb-1">{{ related.content|truncatewords:15 }}</p>
+                    <small>Source: {{ related.source.name }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Back Button -->
+        <div class="mb-5">
+            <a href="{% url 'index' %}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Back to News
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
