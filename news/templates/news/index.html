@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Latest News - News Aggregator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="text-center mb-4">News Aggregator</h1>
+        <div class="d-flex justify-content-center mb-4">
+            <form class="d-flex w-75" action="{% url 'index' %}" method="get">
+                <input class="form-control me-2" type="search" placeholder="Search" name="q" value="{{ request.GET.q|default:'' }}" aria-label="Search">
+                <button class="btn btn-dark" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Filters Sidebar -->
+    <div class="col-lg-3">
+        <div class="filter-section">
+            <h4>Filters</h4>
+            
+            <!-- Source Filter -->
+            <div class="mb-3">
+                <label for="sourceFilter" class="form-label">Source</label>
+                <select class="form-select" id="sourceFilter">
+                    <option value="">Select source</option>
+                    {% for source in sources %}
+                        <option value="{{ source.id }}">{{ source.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="mb-3">
+                <label for="categoryFilter" class="form-label">Category</label>
+                <select class="form-select" id="categoryFilter">
+                    <option value="">Select category</option>
+                    {% for category in categories %}
+                        <option value="{{ category.slug }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Tag Filter -->
+            <div class="mb-3">
+                <label for="tagFilter" class="form-label">Tag</label>
+                <select class="form-select" id="tagFilter">
+                    <option value="">Select tag</option>
+                    {% for tag in tags %}
+                        <option value="{{ tag.slug }}">{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Date Filter -->
+            <div class="mb-3">
+                <label for="dateFilter" class="form-label">Date</label>
+                <select class="form-select" id="dateFilter">
+                    <option value="">Select date</option>
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="last_week">Last 7 days</option>
+                    <option value="last_month">Last 30 days</option>
+                </select>
+            </div>
+
+            <!-- Sort By -->
+            <div class="mb-3">
+                <label for="sortBy" class="form-label">Sort By</label>
+                <select class="form-select" id="sortBy">
+                    <option value="-created_at">Newest First</option>
+                    <option value="created_at">Oldest First</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- News List -->
+    <div class="col-lg-9">
+        <h2 class="mb-4">Latest News</h2>
+        
+        <div id="news-container">
+            {% if news_list %}
+                {% for news in news_list %}
+                <div class="news-item">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <h3><a href="{% url 'news_detail' news.slug %}" class="text-decoration-none text-dark">{{ news.title }}</a></h3>
+                            <p>{{ news.content|truncatewords:30 }}</p>
+                            <a href="{% url 'news_detail' news.slug %}" class="text-primary text-decoration-none">Read more</a>
+                        </div>
+                        <div class="col-md-3 news-date">
+                            {{ news.created_at|date:"F d, Y" }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">No news available at the moment.</div>
+            {% endif %}
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-end">
+                {% if news_list.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ news_list.previous_page_number }}" data-page="{{ news_list.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% with ''|center:news_list.paginator.num_pages as range %}
+                {% for _ in range %}
+                    {% with forloop.counter as num %}
+                        {% if num == 1 or num == news_list.paginator.num_pages or num|add:'-2' <= news_list.number and num|add:'2' >= news_list.number %}
+                            {% if news_list.number == num %}
+                            <li class="page-item active"><a class="page-link" href="?page={{ num }}" data-page="{{ num }}">{{ num }}</a></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}" data-page="{{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% elif num == 2 and news_list.number > 4 %}
+                            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                        {% elif num == news_list.paginator.num_pages|add:'-1' and news_list.number < news_list.paginator.num_pages|add:'-3' %}
+                            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+                {% endwith %}
+                
+                {% if news_list.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ news_list.next_page_number }}" data-page="{{ news_list.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include the ajax.js file -->
+<script src="{% static 'js/ajax.js' %}"></script>
+{% endblock %}
