@@ -12,22 +12,7 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'source_list' %}active{% endif %}" href="{% url 'source_list' %}">Sources</a>
                 </li>
-                {% comment %}
-                <!-- Additional navigation links can be added here -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Categories</a>
-                    <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                        {% for category in categories %}
-                            <li><a class="dropdown-item" href="{% url 'category_detail' category.slug %}">{{ category.name }}</a></li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                {% endcomment %}
             </ul>
-            <form class="d-flex" action="{% url 'index' %}" method="get">
-                <input class="form-control me-2" type="search" placeholder="Search" name="q" value="{{ request.GET.q|default:'' }}" aria-label="Search">
-                <button class="btn btn-outline-light" type="submit">Search</button>
-            </form>
         </div>
     </div>
 </nav>
