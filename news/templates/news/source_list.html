@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}News Sources - News Aggregator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">News Sources</h1>
+        
+        <div class="mb-4">
+            <p class="lead">Discover all the sources we aggregate news from. Click on a source to see its latest news.</p>
+        </div>
+        
+        {% if sources %}
+        <div class="list-group mb-4">
+            {% for source in sources %}
+            <div id="{{ source.id }}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ source.name }}</h5>
+                    <small class="text-muted">
+                        {% if source.active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <div class="mb-2">
+                    <a href="{{ source.url }}" class="text-decoration-none" target="_blank" rel="noopener noreferrer">
+                        {{ source.url }}
+                    </a>
+                </div>
+                
+                {% if source.news.exists %}
+                <div class="mt-3">
+                    <h6>Latest News:</h6>
+                    <div class="list-group list-group-flush">
+                        {% for news in source.news.all|slice:":3" %}
+                        <a href="{% url 'news_detail' news.slug %}" class="list-group-item list-group-item-action border-0 ps-3">
+                            <div class="d-flex w-100 justify-content-between">
+                                <p class="mb-1">{{ news.title|truncatechars:70 }}</p>
+                                <small>{{ news.created_at|date:"M d" }}</small>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'index' %}?source={{ source.id }}" class="btn btn-sm btn-outline-primary">View all news from this source</a>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">No news available from this source yet.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if sources.has_other_pages %}
+        <nav aria-label="Source pagination" class="my-4">
+            <ul class="pagination justify-content-center">
+                {% if sources.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ sources.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&laquo;</span>
+                </li>
+                {% endif %}
+                
+                {% for num in sources.paginator.page_range %}
+                    {% if sources.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if sources.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ sources.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="alert alert-info">No sources available at the moment.</div>
+        {% endif %}
+        
+        <!-- Back Button -->
+        <div class="mb-5">
+            <a href="{% url 'index' %}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Back to News
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
