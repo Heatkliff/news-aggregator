@@ -35,7 +35,14 @@ def index(request):
     sources = Source.objects.filter(active=True)
     categories = Category.objects.all()
     tags = Tag.objects.all()
-    
+
+    sort_by = request.GET.get('sort', '-created_at')
+    allowed_sorts = ['created_at', '-created_at']
+    if sort_by not in allowed_sorts:
+        sort_by = '-created_at'
+
+    news_list = news_list.order_by(sort_by)
+
     # Pagination
     paginator = Paginator(news_list, 10)  # Show 10 news per page
     page = request.GET.get('page', 1)
