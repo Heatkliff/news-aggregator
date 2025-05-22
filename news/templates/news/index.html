@@ -3,6 +3,128 @@
 
 {% block title %}Latest News - News Aggregator{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+.filter-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.filter-header {
+    background: #e9ecef;
+    padding: 12px 15px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+}
+
+.filter-header:hover {
+    background: #dee2e6;
+}
+
+.filter-collapse-icon {
+    transition: transform 0.3s ease;
+}
+
+.filter-collapse-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.filter-content {
+    padding: 15px;
+    background: white;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.filter-content.collapsed {
+    display: none;
+}
+
+.checkbox-group {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.form-check {
+    margin-bottom: 8px;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.tag-search {
+    margin-bottom: 15px;
+}
+
+.mobile-filter-toggle {
+    display: none;
+}
+
+.filter-submit-section {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+@media (max-width: 991px) {
+    .mobile-filter-toggle {
+        display: block;
+        margin-bottom: 20px;
+    }
+    
+    .filters-sidebar {
+        display: none;
+    }
+    
+    .filters-sidebar.show {
+        display: block;
+    }
+    
+    .filter-section {
+        position: relative;
+    }
+}
+
+.news-item {
+    border-bottom: 1px solid #dee2e6;
+    padding: 20px 0;
+}
+
+.news-item:last-child {
+    border-bottom: none;
+}
+
+.news-date {
+    text-align: right;
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+@media (max-width: 768px) {
+    .news-date {
+        text-align: left;
+        margin-top: 10px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
@@ -17,65 +139,115 @@
 </div>
 
 <div class="row">
+    <!-- Mobile Filter Toggle -->
+    <div class="col-12">
+        <button class="btn btn-outline-secondary mobile-filter-toggle w-100" id="mobileFilterToggle">
+            <i class="fas fa-filter"></i> Show Filters
+        </button>
+    </div>
+    
     <!-- Filters Sidebar -->
-    <div class="col-lg-3">
-        <div class="filter-section">
-            <h4>Filters</h4>
-            
-            <!-- Source Filter -->
-            <div class="mb-3">
-                <label for="sourceFilter" class="form-label">Source</label>
-                <select class="form-select" id="sourceFilter">
-                    <option value="">Select source</option>
-                    {% for source in sources %}
-                        <option value="{{ source.id }}">{{ source.name }}</option>
-                    {% endfor %}
-                </select>
+    <div class="col-lg-3 filters-sidebar" id="filtersSidebar">
+        <form id="filterForm">
+            <div class="filter-section">
+                <h4 class="mb-3">Filters</h4>
+                
+                <!-- Source Filter -->
+                <div class="filter-group">
+                    <div class="filter-header" data-toggle="source">
+                        <span>Source</span>
+                        <i class="fas fa-chevron-down filter-collapse-icon"></i>
+                    </div>
+                    <div class="filter-content" id="sourceContent">
+                        <div class="checkbox-group">
+                            {% for source in sources %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="source" value="{{ source.id }}" id="source{{ source.id }}">
+                                <label class="form-check-label" for="source{{ source.id }}">
+                                    {{ source.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Category Filter -->
+                <div class="filter-group">
+                    <div class="filter-header" data-toggle="category">
+                        <span>Category</span>
+                        <i class="fas fa-chevron-down filter-collapse-icon"></i>
+                    </div>
+                    <div class="filter-content" id="categoryContent">
+                        <div class="checkbox-group">
+                            {% for category in categories %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="category" value="{{ category.slug }}" id="category{{ category.id }}">
+                                <label class="form-check-label" for="category{{ category.id }}">
+                                    {{ category.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tag Filter -->
+                <div class="filter-group">
+                    <div class="filter-header" data-toggle="tag">
+                        <span>Tag</span>
+                        <i class="fas fa-chevron-down filter-collapse-icon"></i>
+                    </div>
+                    <div class="filter-content" id="tagContent">
+                        <div class="tag-search">
+                            <input type="text" class="form-control" id="tagSearch" placeholder="Search tags...">
+                        </div>
+                        <div class="checkbox-group" id="tagCheckboxGroup">
+                            {% for tag in tags %}
+                            <div class="form-check tag-item" data-tag-name="{{ tag.name|lower }}">
+                                <input class="form-check-input" type="checkbox" name="tag" value="{{ tag.slug }}" id="tag{{ tag.id }}">
+                                <label class="form-check-label" for="tag{{ tag.id }}">
+                                    {{ tag.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Date Filter -->
+                <div class="filter-group">
+                    <div class="filter-header" data-toggle="date">
+                        <span>Date Range</span>
+                        <i class="fas fa-chevron-down filter-collapse-icon"></i>
+                    </div>
+                    <div class="filter-content" id="dateContent">
+                        <div class="form-group">
+                            <label for="dateRange" class="form-label">Select Date Range</label>
+                            <input type="text" class="form-control" id="dateRange" placeholder="Click to select dates">
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearDates">Clear Dates</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sort By (Always visible) -->
+                <div class="mb-3">
+                    <label for="sortBy" class="form-label fw-bold">Sort By</label>
+                    <select class="form-select" id="sortBy" name="sort">
+                        <option value="-created_at">Newest First</option>
+                        <option value="created_at">Oldest First</option>
+                    </select>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="filter-submit-section">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Apply Filters</button>
+                    <button type="button" class="btn btn-outline-secondary mt-2 w-100" id="clearFilters">Clear All Filters</button>
+                </div>
             </div>
-            
-            <!-- Category Filter -->
-            <div class="mb-3">
-                <label for="categoryFilter" class="form-label">Category</label>
-                <select class="form-select" id="categoryFilter">
-                    <option value="">Select category</option>
-                    {% for category in categories %}
-                        <option value="{{ category.slug }}">{{ category.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Tag Filter -->
-            <div class="mb-3">
-                <label for="tagFilter" class="form-label">Tag</label>
-                <select class="form-select" id="tagFilter">
-                    <option value="">Select tag</option>
-                    {% for tag in tags %}
-                        <option value="{{ tag.slug }}">{{ tag.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Date Filter -->
-            <div class="mb-3">
-                <label for="dateFilter" class="form-label">Date</label>
-                <select class="form-select" id="dateFilter">
-                    <option value="">Select date</option>
-                    <option value="today">Today</option>
-                    <option value="yesterday">Yesterday</option>
-                    <option value="last_week">Last 7 days</option>
-                    <option value="last_month">Last 30 days</option>
-                </select>
-            </div>
-
-            <!-- Sort By -->
-            <div class="mb-3">
-                <label for="sortBy" class="form-label">Sort By</label>
-                <select class="form-select" id="sortBy">
-                    <option value="-created_at">Newest First</option>
-                    <option value="created_at">Oldest First</option>
-                </select>
-            </div>
-        </div>
+        </form>
     </div>
     
     <!-- News List -->
@@ -93,7 +265,7 @@
                             <a href="{% url 'news_detail' news.slug %}" class="text-primary text-decoration-none">Read more</a>
                         </div>
                         <div class="col-md-3 news-date">
-                            {{ news.created_at|date:"F d, Y" }}
+                            {{ news.created_at|date:"F d, Y H:i" }}
                         </div>
                     </div>
                 </div>
@@ -146,6 +318,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Include the ajax.js file -->
+<!-- Include flatpickr for date picker -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- Include the updated ajax.js file -->
 <script src="{% static 'js/ajax.js' %}"></script>
 {% endblock %}
