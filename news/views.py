@@ -18,14 +18,19 @@ def index(request):
             Q(title__icontains=query) | 
             Q(content__icontains=query)
         )
-    
-    # Get filter values from GET parameters (for future implementation)
-    # source = request.GET.get('source')
-    # category = request.GET.get('category')
-    # tag = request.GET.get('tag')
-    # date_filter = request.GET.get('date')
-    # sort_by = request.GET.get('sort', '-created_at')
-    
+
+    source = request.GET.get('source')
+    if source:
+        news_list = news_list.filter(source__id=source)
+
+    category = request.GET.get('category')
+    if category:
+        news_list = news_list.filter(site_categories__category__slug=category)
+
+    tag = request.GET.get('tag')
+    if tag:
+        news_list = news_list.filter(tags__slug=tag)
+
     # Get data for filter dropdowns
     sources = Source.objects.filter(active=True)
     categories = Category.objects.all()
